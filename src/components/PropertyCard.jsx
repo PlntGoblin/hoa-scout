@@ -61,7 +61,7 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
   if (hoa?.strPolicy === 'allowed') flags.push('✓ HOA permits STR');
   if (hoa?.strPolicy === 'prohibited') flags.push('✗ HOA prohibits STR');
   if (parcel) flags.push('📍 Parcel data matched');
-  if (parcel?.county) flags.push(`🗺 County: ${parcel.county}`);
+  if (parcel?.county) flags.push(`🗺 County: ${countyLabel}`);
 
   return (
     <div style={{

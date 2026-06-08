@@ -8,7 +8,7 @@
 
 import { normalizeHoaKey, upsertHoa, listHoas } from './hoaStore';
 
-const SEED_VERSION = 2;
+const SEED_VERSION = 3;
 const SEED_VERSION_KEY = 'property-scout:seed-version';
 
 const KNOWN_HOAS = [
@@ -81,6 +81,104 @@ const KNOWN_HOAS = [
     lastVerified: '2026-06',
     confidence: 'medium',
     county: 'coconino',
+  },
+
+  // ── San Diego Community Plan Areas ──────────────────────────────────────────
+  // Keyed to SD community plan area names (SANDAG CMTY_PLAN_SD layer).
+  // STR context: Tier 3 whole-home STRO license required; HOA policy is the
+  // second gate. Verify CC&Rs via SD County Recorder.
+
+  {
+    name: 'CARMEL VALLEY',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Master-planned community with multiple sub-HOAs (Del Mar Highlands, Torrey Del Mar, etc.). Many sub-associations restrict STRs — verify individual CC&Rs via SD County Recorder.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+    notes: 'High HOA density. Tier 3 STRO license also required.',
+  },
+  {
+    name: 'RANCHO BERNARDO',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Large planned community with 30+ sub-HOAs (Seven Oaks, Bernardo Heights, etc.). Check each sub-association CC&Rs individually — restrictions vary widely.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'SCRIPPS MIRAMAR RANCH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Multiple HOAs. Scripps Ranch HOA and sub-associations. Verify CC&Rs — some restrict minimum lease terms.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'MISSION BEACH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'STRO Tier 4 area (separate cap, frequently at limit). HOA restrictions vary by building. Verify both Tier 4 license availability AND any HOA/condo CC&Rs.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+    notes: 'Tier 4 STRO — cap often full. High priority to verify.',
+  },
+  {
+    name: 'PACIFIC BEACH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Popular STR market. Mix of condos with HOAs and single-family homes. Condo HOAs often restrict STRs — verify CC&Rs per building.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'LA JOLLA',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Mix of HOA and non-HOA properties. Luxury condos and hillside communities — many condo associations restrict STRs. Verify per building/community.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'OCEAN BEACH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Mostly single-family and small multi-unit — fewer formal HOAs than planned communities. STR-friendly area but verify per parcel.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'BLACK MOUNTAIN RANCH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Newer master-planned community. HOA likely restricts STRs — verify CC&Rs via SD County Recorder.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'PACIFIC HIGHLANDS RANCH',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Newer planned community with active HOA. Likely has STR restrictions — verify CC&Rs.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
+  },
+  {
+    name: 'MIRA MESA',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Older planned community. HOA coverage varies by tract. Research individual subdivision CC&Rs.',
+    source: 'San Diego Community Plan Research',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'sandiego',
   },
 ];
 

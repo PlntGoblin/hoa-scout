@@ -24,7 +24,7 @@ const MARKETS = {
   sandiego: {
     label: 'San Diego, CA',
     center: { longitude: -117.1611, latitude: 32.7157, zoom: 11 },
-    // Zoning GeoJSON — city of SD, residential + commercial zones
+    subdivisionsUrl: 'https://geo.sandag.org/server/rest/services/Hosted/CMTY_PLAN_SD/FeatureServer/0/query?where=1%3D1&outFields=cpname,cpcode,website&f=geojson',
     zoningUrl: 'https://webmaps.sandiego.gov/arcgis/rest/services/DSD/Zoning_Base/MapServer/0/query?where=1%3D1&geometry=-117.35%2C32.55%2C-116.95%2C32.90&geometryType=esriGeometryEnvelope&inSR=4326&outFields=ZONE_NAME&f=geojson',
   },
 };
@@ -35,7 +35,8 @@ const SEDONA_LAYERS = [
 ];
 
 const SD_LAYERS = [
-  { id: 'zoning', label: 'Zoning', color: '#f59e0b', visible: true },
+  { id: 'subdivisions', label: 'Community Plans', color: '#6366f1', visible: true },
+  { id: 'zoning',       label: 'Zoning',          color: '#f59e0b', visible: false },
 ];
 
 export default function App() {
@@ -127,18 +128,19 @@ export default function App() {
   const subdivisionLayer = layers.find((l) => l.id === 'subdivisions');
   const zoningLayer = layers.find((l) => l.id === 'zoning');
 
-  // Enrich Sedona subdivision polygons with HOA policy colors
+  // Enrich subdivision/CPA polygons with HOA policy colors (works for both markets)
   const enrichedSubdivisionsGeoJSON = useMemo(() => {
     if (!subdivisionsGeoJSON) return null;
     const recordsByKey = Object.fromEntries(hoaRecords.map((r) => [r.key, r]));
     return {
       ...subdivisionsGeoJSON,
       features: subdivisionsGeoJSON.features.map((f) => {
-        const name = f.properties?.SUBCOMMON || f.properties?.SUBNAME || '';
+        // Sedona uses SUBCOMMON/SUBNAME; SD uses cpname
+        const name = f.properties?.SUBCOMMON || f.properties?.SUBNAME || f.properties?.cpname || '';
         const key = normalizeHoaKey(name);
         const record = recordsByKey[key];
         const policy = record?.strPolicy ?? 'none';
-        return { ...f, properties: { ...f.properties, hoaPolicy: policy } };
+        return { ...f, properties: { ...f.properties, hoaPolicy: policy, areaName: name } };
       }),
     };
   }, [subdivisionsGeoJSON, hoaRecords]);
@@ -174,8 +176,8 @@ export default function App() {
       >
         <NavigationControl position="bottom-right" />
 
-        {/* Sedona: HOA-colored subdivision polygons */}
-        {market === 'sedona' && enrichedSubdivisionsGeoJSON && (
+        {/* HOA-colored subdivision / community plan polygons (both markets) */}
+        {enrichedSubdivisionsGeoJSON && (
           <Source id="subdivisions" type="geojson" data={enrichedSubdivisionsGeoJSON}>
             <Layer id="subdivisions-fill" type="fill"
               layout={{ visibility: subdivisionLayer?.visible ? 'visible' : 'none' }}
@@ -272,9 +274,8 @@ export default function App() {
       <LayerToggle layers={layers} onToggle={toggleLayer} />
       <UsageTracker />
 
-      {/* HOA Records button — Sedona only */}
-      {market === 'sedona' && (
-        <button
+      {/* HOA Records button */}
+      <button
           onClick={() => { setShowHoaList((v) => !v); setSelectedPin(null); }}
           style={{
             position: 'absolute', top: 182, left: 16, zIndex: 10,
@@ -289,7 +290,6 @@ export default function App() {
         >
           🏘 HOA Records
         </button>
-      )}
 
       {/* Property card */}
       {selectedPin && !showHoaForm && !showHoaList && (

@@ -10,6 +10,9 @@ const SANDAG_PARCELS_URL =
 const SD_ZONING_URL =
   'https://webmaps.sandiego.gov/arcgis/rest/services/DSD/Zoning_Base/MapServer/0/query';
 
+const SD_COMMUNITY_PLAN_URL =
+  'https://geo.sandag.org/server/rest/services/Hosted/CMTY_PLAN_SD/FeatureServer/0/query';
+
 const FIELDS = [
   'apn', 'situs_address', 'situs_street', 'situs_suffix', 'situs_zip',
   'situs_juris', 'situs_community', 'nucleus_zone_cd', 'asr_zone',
@@ -49,11 +52,16 @@ export async function lookupSdParcel(lng, lat) {
     const attrs = await queryPoint(SANDAG_PARCELS_URL, lng, lat, { outFields: FIELDS });
     if (!attrs || !attrs.apn) return null;
 
-    // Fetch zoning name separately — more descriptive than nucleus_zone_cd code
+    // Fetch zoning name and community plan area in parallel
     let zoneName = attrs.nucleus_zone_cd || attrs.asr_zone || null;
+    let communityPlan = attrs.situs_community || null;
     try {
-      const zoningAttrs = await queryPoint(SD_ZONING_URL, lng, lat, { outFields: 'ZONE_NAME' });
+      const [zoningAttrs, cpaAttrs] = await Promise.all([
+        queryPoint(SD_ZONING_URL, lng, lat, { outFields: 'ZONE_NAME' }),
+        queryPoint(SD_COMMUNITY_PLAN_URL, lng, lat, { outFields: 'cpname,website' }),
+      ]);
       if (zoningAttrs?.ZONE_NAME) zoneName = zoningAttrs.ZONE_NAME;
+      if (cpaAttrs?.cpname) communityPlan = cpaAttrs.cpname;
     } catch {}
 
     return {
@@ -69,8 +77,9 @@ export async function lookupSdParcel(lng, lat) {
       squareFootage: attrs.total_lvg_area || null,
       yearBuilt: attrs.year_effective || null,
       assessedValue: attrs.asr_total || null,
+      subdivision: communityPlan,
       jurisdiction: attrs.situs_juris || null,
-      community: attrs.situs_community || null,
+      community: communityPlan,
       ownerOccupied: attrs.ownerocc != null ? Boolean(attrs.ownerocc) : null,
       county: 'san-diego',
       source: 'sandag-gis',
