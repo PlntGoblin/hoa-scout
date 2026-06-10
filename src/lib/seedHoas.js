@@ -8,7 +8,7 @@
 
 import { normalizeHoaKey, upsertHoa, listHoas } from './hoaStore';
 
-const SEED_VERSION = 3;
+const SEED_VERSION = 4;
 const SEED_VERSION_KEY = 'property-scout:seed-version';
 
 const KNOWN_HOAS = [
@@ -179,6 +179,143 @@ const KNOWN_HOAS = [
     lastVerified: '2026-06',
     confidence: 'medium',
     market: 'sandiego',
+  },
+
+  // ── Nashville Community Planning Areas ──────────────────────────────────────
+  // 14 Metro Nashville CPAs from Boundaries/Boundaries/MapServer/1.
+  // STR context: Nashville uses a PERMITTED-ZONE model. Non-owner-occupied STRs
+  // require a Metro license and are only legal in commercial/mixed-use zones.
+  // Residential zones (RS, R, AR) prohibit non-owner-occupied STRs.
+  // Verify against current Metro Nashville Code §17.16.210.
+
+  {
+    name: 'Nashville',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Urban core — mix of commercial/mixed-use and residential zones. Non-owner-occupied STRs permitted in MUL/ORI/commercial zones; prohibited in RS/R zones. Verify ZONE_DESC for each parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+    notes: 'Downtown and urban neighborhoods. High density of MUL/MUG zones — STR-eligible with permit.',
+  },
+  {
+    name: 'Antioch - Priest Lake',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Suburban southeast Nashville. Primarily residential (RS) zones — non-owner-occupied STRs likely prohibited. Verify zoning per parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Bellevue',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Suburban west Nashville. Mostly residential zoning — non-owner-occupied STRs likely prohibited. Mixed-use corridors along Hwy 70 may be eligible.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Bordeaux - Whites Creek - Haynes Trinity',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'North Nashville CPA. Primarily residential zones. Verify zoning per parcel before assuming STR eligibility.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Donelson - Hermitage - Old Hickory',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'East Nashville suburbs. Mix of residential and some commercial corridors. Non-owner-occupied STRs prohibited in RS zones — verify per parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'East Nashville',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'High-demand STR market. Mix of RS residential (prohibited) and MUL/mixed-use corridors (permitted). Gentrifying area — many investor purchases. Verify ZONE_DESC for each parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+    notes: 'Popular STR target area. Zone verification critical — single-family residential STRs prohibited.',
+  },
+  {
+    name: 'Edgehill - Berry Hill',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'South-central Nashville. Mix of residential and commercial zones. Berry Hill is an independent municipality — verify applicable codes separately.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Joelton',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Rural-suburban far north Davidson County. Primarily AG/AR agricultural-residential zoning — non-owner-occupied STRs likely prohibited.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Madison',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'North Nashville suburb. Primarily residential zoning. Some commercial corridors along Gallatin Pike may be eligible. Verify per parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'North Nashville',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Near Germantown and Buena Vista. Mix of residential and commercial/mixed-use zones. Higher density areas near downtown may have MUL/ORI eligibility.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+    notes: 'Germantown corridor — verify MUL zoning for STR eligibility.',
+  },
+  {
+    name: 'Pennington Bend',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'East Nashville near the river bend. Primarily residential. Verify zone classification per parcel.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Radnor - Berry',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'South Nashville. Primarily residential neighborhoods. Non-owner-occupied STRs likely prohibited under RS zoning.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Rivergate - Springfield Pike',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Far north Davidson County near Rivergate. Mix of commercial corridors and residential. Commercial zones along Springfield Pike may be eligible.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
+  },
+  {
+    name: 'Southeast Nashville',
+    strPolicy: 'unknown',
+    strPolicyNotes: 'Suburban southeast. Primarily residential (RS) zoning. Non-owner-occupied STRs likely prohibited. Some commercial corridors may be eligible.',
+    source: 'Nashville Community Planning Areas / Metro Nashville Code',
+    lastVerified: '2026-06',
+    confidence: 'medium',
+    market: 'nashville',
   },
 ];
 

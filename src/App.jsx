@@ -27,6 +27,12 @@ const MARKETS = {
     subdivisionsUrl: 'https://geo.sandag.org/server/rest/services/Hosted/CMTY_PLAN_SD/FeatureServer/0/query?where=1%3D1&outFields=cpname,cpcode,website&f=geojson',
     zoningUrl: 'https://webmaps.sandiego.gov/arcgis/rest/services/DSD/Zoning_Base/MapServer/0/query?where=1%3D1&geometry=-117.35%2C32.55%2C-116.95%2C32.90&geometryType=esriGeometryEnvelope&inSR=4326&outFields=ZONE_NAME&f=geojson',
   },
+  nashville: {
+    label: 'Nashville, TN',
+    center: { longitude: -86.7816, latitude: 36.1627, zoom: 11 },
+    subdivisionsUrl: 'https://maps.nashville.gov/arcgis/rest/services/Boundaries/Boundaries/MapServer/1/query?where=1%3D1&outFields=CommunityName&f=geojson',
+    zoningUrl: 'https://maps.nashville.gov/arcgis/rest/services/Zoning_Landuse/Zoning/MapServer/14/query?where=1%3D1&geometry=-87.1%2C35.95%2C-86.5%2C36.45&geometryType=esriGeometryEnvelope&inSR=4326&outFields=ZONE_DESC&f=geojson',
+  },
 };
 
 const SEDONA_LAYERS = [
@@ -37,6 +43,11 @@ const SEDONA_LAYERS = [
 const SD_LAYERS = [
   { id: 'subdivisions', label: 'Community Plans', color: '#6366f1', visible: true },
   { id: 'zoning',       label: 'Zoning',          color: '#f59e0b', visible: false },
+];
+
+const NASHVILLE_LAYERS = [
+  { id: 'subdivisions', label: 'Planning Areas', color: '#6366f1', visible: true },
+  { id: 'zoning',       label: 'Zoning',         color: '#f59e0b', visible: false },
 ];
 
 export default function App() {
@@ -74,7 +85,8 @@ export default function App() {
 
   const switchMarket = useCallback((m) => {
     setMarket(m);
-    setLayers(m === 'sedona' ? SEDONA_LAYERS : SD_LAYERS);
+    const layerMap = { sedona: SEDONA_LAYERS, sandiego: SD_LAYERS, nashville: NASHVILLE_LAYERS };
+    setLayers(layerMap[m] || SEDONA_LAYERS);
     setPins([]);
     setSelectedPin(null);
     setParcel(null);
@@ -136,7 +148,7 @@ export default function App() {
       ...subdivisionsGeoJSON,
       features: subdivisionsGeoJSON.features.map((f) => {
         // Sedona uses SUBCOMMON/SUBNAME; SD uses cpname
-        const name = f.properties?.SUBCOMMON || f.properties?.SUBNAME || f.properties?.cpname || '';
+        const name = f.properties?.SUBCOMMON || f.properties?.SUBNAME || f.properties?.cpname || f.properties?.CommunityName || '';
         const key = normalizeHoaKey(name);
         const record = recordsByKey[key];
         const policy = record?.strPolicy ?? 'none';
@@ -145,9 +157,26 @@ export default function App() {
     };
   }, [subdivisionsGeoJSON, hoaRecords]);
 
-  // Enrich SD zoning layer with STRO-eligibility color signal
+  // Enrich Nashville zoning layer with STR-zone color signal
   const enrichedZoningGeoJSON = useMemo(() => {
-    if (!zoningGeoJSON || market !== 'sandiego') return zoningGeoJSON;
+    if (!zoningGeoJSON) return zoningGeoJSON;
+
+    if (market === 'nashville') {
+      const PERMITTED = ['MUL','MUG','MUN','MUI','ORI','OR','CF','IWD','IND','CC','CS','CL','CN','CBD','DTC','SP','RM'];
+      const PROHIBITED = ['RS','R','AR','AG'];
+      return {
+        ...zoningGeoJSON,
+        features: zoningGeoJSON.features.map((f) => {
+          const z = (f.properties?.ZONE_DESC || '').toUpperCase();
+          const category =
+            PERMITTED.some(p => z === p || z.startsWith(p))  ? 'permitted' :
+            PROHIBITED.some(p => z === p || z.startsWith(p)) ? 'prohibited' : 'unknown';
+          return { ...f, properties: { ...f.properties, zoneCategory: category, zoneName: z } };
+        }),
+      };
+    }
+
+    if (market !== 'sandiego') return zoningGeoJSON;
     return {
       ...zoningGeoJSON,
       features: zoningGeoJSON.features.map((f) => {
@@ -207,26 +236,34 @@ export default function App() {
             <Layer id="zoning-fill" type="fill"
               layout={{ visibility: zoningLayer?.visible ? 'visible' : 'none' }}
               paint={{
-                'fill-color': market === 'sandiego'
-                  ? ['match', ['get', 'zoneCategory'],
-                      'residential', '#3b82f6',
-                      'agri-res',    '#22c55e',
-                      'commercial',  '#f59e0b',
-                      '#94a3b8']
-                  : '#f59e0b',
+                'fill-color':
+                  market === 'sandiego' ? ['match', ['get', 'zoneCategory'],
+                    'residential', '#3b82f6',
+                    'agri-res',    '#22c55e',
+                    'commercial',  '#f59e0b',
+                    '#94a3b8'] :
+                  market === 'nashville' ? ['match', ['get', 'zoneCategory'],
+                    'permitted',  '#22c55e',
+                    'prohibited', '#ef4444',
+                    '#94a3b8'] :
+                  '#f59e0b',
                 'fill-opacity': 0.18,
               }}
             />
             <Layer id="zoning-line" type="line"
               layout={{ visibility: zoningLayer?.visible ? 'visible' : 'none' }}
               paint={{
-                'line-color': market === 'sandiego'
-                  ? ['match', ['get', 'zoneCategory'],
-                      'residential', '#2563eb',
-                      'agri-res',    '#16a34a',
-                      'commercial',  '#d97706',
-                      '#64748b']
-                  : '#f59e0b',
+                'line-color':
+                  market === 'sandiego' ? ['match', ['get', 'zoneCategory'],
+                    'residential', '#2563eb',
+                    'agri-res',    '#16a34a',
+                    'commercial',  '#d97706',
+                    '#64748b'] :
+                  market === 'nashville' ? ['match', ['get', 'zoneCategory'],
+                    'permitted',  '#16a34a',
+                    'prohibited', '#dc2626',
+                    '#64748b'] :
+                  '#f59e0b',
                 'line-width': 1,
                 'line-opacity': 0.6,
               }}
@@ -333,7 +370,7 @@ export default function App() {
         fontFamily: 'system-ui, -apple-system, sans-serif',
         backdropFilter: 'blur(4px)',
       }}>
-        Property Scout · {currentMarket.label} · Phase 1
+        Property Scout · {currentMarket.label} · Phase 2
       </div>
     </div>
   );

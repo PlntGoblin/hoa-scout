@@ -1,6 +1,7 @@
 import { routeCounty } from './countyRouter';
 import { lookupPropertyRentCast } from './rentcast';
 import { lookupSdParcel } from './sdParcelLookup';
+import { lookupNashvilleParcel } from './nashvilleParcelLookup';
 
 /**
  * Look up parcel + owner info.
@@ -89,22 +90,43 @@ export function assessorUrl(county, apn) {
   if (county === 'san-diego') {
     return `https://arcc.sdcounty.ca.gov/Pages/Assessor-Parcel-Details.aspx?parcel=${apn}`;
   }
+  if (county === 'davidson') {
+    return `https://www.padctn.org/prc/property/${apn}/card/1`;
+  }
   return null;
 }
 
-const SD_BOUNDS = { minLng: -117.6, maxLng: -116.9, minLat: 32.5, maxLat: 33.2 };
+const SD_BOUNDS        = { minLng: -117.6,  maxLng: -116.9,  minLat: 32.5,  maxLat: 33.2  };
+const NASHVILLE_BOUNDS = { minLng: -87.05,  maxLng: -86.50,  minLat: 35.95, maxLat: 36.42 };
 
 function isSanDiego(lng, lat) {
   return lng >= SD_BOUNDS.minLng && lng <= SD_BOUNDS.maxLng &&
          lat >= SD_BOUNDS.minLat && lat <= SD_BOUNDS.maxLat;
 }
 
+function isNashville(lng, lat) {
+  return lng >= NASHVILLE_BOUNDS.minLng && lng <= NASHVILLE_BOUNDS.maxLng &&
+         lat >= NASHVILLE_BOUNDS.minLat && lat <= NASHVILLE_BOUNDS.maxLat;
+}
+
 /**
  * Main lookup — routes by geography, falls back to RentCast.
- * San Diego → SANDAG GIS → RentCast
- * Sedona → Yavapai GIS → RentCast
+ * Nashville  → Metro Nashville GIS (owner data included — no RentCast needed)
+ * San Diego  → SANDAG GIS → RentCast
+ * Sedona     → Yavapai GIS → RentCast
  */
 export async function lookupParcel(lng, lat, address = null) {
+  // Nashville branch — owner data is in the GIS layer directly
+  if (isNashville(lng, lat)) {
+    try {
+      const result = await lookupNashvilleParcel(lng, lat);
+      if (result) return result;
+    } catch (e) {
+      console.warn('Nashville GIS lookup failed:', e);
+    }
+    return null;
+  }
+
   // San Diego branch
   if (isSanDiego(lng, lat)) {
     try {

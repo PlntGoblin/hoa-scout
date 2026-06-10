@@ -2,6 +2,7 @@ import { detectOwnerOccupancy, assessorUrl } from '../lib/parcelLookup';
 import { deriveConfidence } from '../lib/hoaStore';
 import { sedonaStrRule } from '../lib/strRules';
 import { sdStrRule } from '../lib/sdStrRules';
+import { nashvilleStrRule } from '../lib/nashvilleStrRules';
 
 const CONFIDENCE_COLORS = {
   high:   { bg: '#d1fae5', text: '#065f46', label: 'High' },
@@ -40,14 +41,17 @@ function Row({ label, value, mono }) {
 export default function PropertyCard({ feature, parcel, hoa, market, loading, onClose, onAddHoa }) {
   if (!feature && !loading) return null;
 
-  const isSd = market === 'sandiego';
+  const isSd        = market === 'sandiego';
+  const isNashville = market === 'nashville';
   const occupancy = parcel ? detectOwnerOccupancy(parcel) : 'unknown';
   const county = parcel?.county ?? 'unknown';
   const countyLabel = county.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   const confidence = deriveConfidence(parcel, hoa);
   const confStyle = CONFIDENCE_COLORS[confidence];
 
-  const strRule = isSd ? sdStrRule({ parcel, hoa }) : sedonaStrRule({ hoa });
+  const strRule = isSd        ? sdStrRule({ parcel, hoa })
+                : isNashville ? nashvilleStrRule({ parcel, hoa })
+                : sedonaStrRule({ hoa });
   const strPolicyKey = hoa?.strPolicy ?? 'unknown';
   const strColor = STR_POLICY_COLORS[strPolicyKey] || STR_POLICY_COLORS.unknown;
 
@@ -75,7 +79,7 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
       <div style={{ background: '#0f172a', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-            Property Card · {isSd ? 'San Diego, CA' : 'Sedona, AZ'}
+            Property Card · {isSd ? 'San Diego, CA' : isNashville ? 'Nashville, TN' : 'Sedona, AZ'}
           </div>
           <div style={{ color: '#f8fafc', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
             {parcel?.siteAddress || feature?.properties?.address || 'Locating…'}
@@ -144,7 +148,9 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
             )}
 
             {/* HOA & STR */}
-            <SectionHeader>{isSd ? 'STRO Tier' : 'HOA & STR'}</SectionHeader>
+            <SectionHeader>
+              {isSd ? 'STRO Tier' : isNashville ? 'STR Zone Eligibility' : 'HOA & STR'}
+            </SectionHeader>
 
             {isSd ? (
               // San Diego: show STRO tier analysis
@@ -159,6 +165,23 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
                 )}
                 <Row label="Summary" value={strRule.summary} />
                 {strRule.capNote && <Row label="⚠ Cap Status" value={strRule.capNote} />}
+                {strRule.hoaNote && <Row label="HOA Note" value={strRule.hoaNote} />}
+                <Row label="Permit Note" value={strRule.permitNote} />
+              </>
+            ) : isNashville ? (
+              // Nashville: zone-based eligibility
+              <>
+                <div style={{ display: 'flex', gap: 8, padding: '5px 0', borderBottom: '1px solid #f1f5f9', alignItems: 'center' }}>
+                  <span style={{ color: '#94a3b8', fontSize: 12, minWidth: 130, flexShrink: 0 }}>Zone Ruling</span>
+                  <Badge color={
+                    strRule.eligible === true  ? STR_POLICY_COLORS.allowed :
+                    strRule.eligible === false ? STR_POLICY_COLORS.prohibited :
+                    STR_POLICY_COLORS.unknown
+                  }>
+                    {strRule.tierLabel}
+                  </Badge>
+                </div>
+                <Row label="Summary" value={strRule.summary} />
                 {strRule.hoaNote && <Row label="HOA Note" value={strRule.hoaNote} />}
                 <Row label="Permit Note" value={strRule.permitNote} />
               </>
@@ -207,7 +230,7 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
               <span style={{ color: '#94a3b8', fontSize: 12 }}>Official Source </span>
               <a href={strRule.officialLink} target="_blank" rel="noreferrer"
                 style={{ fontSize: 12, color: '#3b82f6' }}>
-                {isSd ? 'SD STRO Info ↗' : 'Sedona STR Permits ↗'}
+                {isSd ? 'SD STRO Info ↗' : isNashville ? 'Nashville STR Permits ↗' : 'Sedona STR Permits ↗'}
               </a>
             </div>
 
