@@ -3,6 +3,8 @@ import { deriveConfidence } from '../lib/hoaStore';
 import { sedonaStrRule } from '../lib/strRules';
 import { sdStrRule } from '../lib/sdStrRules';
 import { nashvilleStrRule } from '../lib/nashvilleStrRules';
+import { computeScore } from '../lib/opportunityScore';
+import { isShortlisted } from '../lib/shortlistStore';
 
 const CONFIDENCE_COLORS = {
   high:   { bg: '#d1fae5', text: '#065f46', label: 'High' },
@@ -49,7 +51,7 @@ function fmt$(n) {
   return `$${Number(n).toLocaleString()}`;
 }
 
-export default function PropertyCard({ feature, parcel, hoa, market, loading, avm, avmLoading, strPermit, onGetAvm, onClose, onAddHoa }) {
+export default function PropertyCard({ feature, parcel, hoa, market, loading, avm, avmLoading, strPermit, onGetAvm, onClose, onAddHoa, onShortlist, pinId }) {
   if (!feature && !loading) return null;
 
   const isSd        = market === 'sandiego';
@@ -63,6 +65,12 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
   const strRule = isSd        ? sdStrRule({ parcel, hoa })
                 : isNashville ? nashvilleStrRule({ parcel, hoa })
                 : sedonaStrRule({ hoa });
+
+  const { score, breakdown } = computeScore({ parcel, hoa, strRule, avm, market });
+  const shortlisted = pinId ? isShortlisted(pinId) : false;
+  const scoreColor = score >= 70 ? { bg: '#d1fae5', text: '#065f46' }
+                   : score >= 40 ? { bg: '#fef3c7', text: '#92400e' }
+                   : { bg: '#fee2e2', text: '#991b1b' };
   const strPolicyKey = hoa?.strPolicy ?? 'unknown';
   const strColor = STR_POLICY_COLORS[strPolicyKey] || STR_POLICY_COLORS.unknown;
 
@@ -87,16 +95,45 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
       fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
       {/* Header */}
-      <div style={{ background: '#0f172a', padding: '14px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
-            Property Card · {isSd ? 'San Diego, CA' : isNashville ? 'Nashville, TN' : 'Sedona, AZ'}
+      <div style={{ background: '#0f172a', padding: '14px 16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>
+              Property Card · {isSd ? 'San Diego, CA' : isNashville ? 'Nashville, TN' : 'Sedona, AZ'}
+            </div>
+            <div style={{ color: '#f8fafc', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
+              {parcel?.siteAddress || feature?.properties?.address || 'Locating…'}
+            </div>
           </div>
-          <div style={{ color: '#f8fafc', fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
-            {parcel?.siteAddress || feature?.properties?.address || 'Locating…'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+            {/* Opportunity score badge */}
+            {!loading && parcel && (
+              <div style={{
+                background: scoreColor.bg, color: scoreColor.text,
+                borderRadius: 6, padding: '3px 9px',
+                fontSize: 13, fontWeight: 700, flexShrink: 0,
+              }} title="Opportunity score — prioritization aid, not a recommendation">
+                {score}/100
+              </div>
+            )}
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer', padding: 0 }}>✕</button>
           </div>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer', padding: 0, marginLeft: 8 }}>✕</button>
+        {/* Shortlist button */}
+        {!loading && parcel && (
+          <button
+            onClick={() => onShortlist?.({ score })}
+            style={{
+              marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 6,
+              border: shortlisted ? '1px solid #3b82f6' : '1px solid #334155',
+              background: shortlisted ? '#1d4ed8' : '#1e293b',
+              color: shortlisted ? '#fff' : '#94a3b8',
+              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {shortlisted ? '✓ On Shortlist' : '+ Add to Shortlist'}
+          </button>
+        )}
       </div>
 
       {/* Body */}
@@ -330,18 +367,29 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
               <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>Historical comps only</span>
             </div>
 
-            {/* Why it surfaced */}
+            {/* Why it surfaced — score breakdown */}
             <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px', marginTop: 12 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 6 }}>
-                Why It Surfaced
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Opportunity Score
+                </div>
+                <div style={{
+                  background: scoreColor.bg, color: scoreColor.text,
+                  borderRadius: 5, padding: '2px 8px', fontSize: 12, fontWeight: 700,
+                }}>
+                  {score}/100
+                </div>
               </div>
-              {flags.length ? (
-                flags.map((f, i) => (
-                  <div key={i} style={{ fontSize: 12, color: '#475569', lineHeight: 1.8 }}>{f}</div>
-                ))
-              ) : (
-                <div style={{ fontSize: 12, color: '#94a3b8' }}>No signals — confidence is Low.</div>
-              )}
+              {breakdown.map(({ flag, fired, label, weight, points }) => (
+                <div key={flag} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, lineHeight: 2, color: fired ? '#1e293b' : '#cbd5e1' }}>
+                  <span style={{ width: 14, textAlign: 'center' }}>{fired ? '✓' : '○'}</span>
+                  <span style={{ flex: 1 }}>{label}</span>
+                  <span style={{ fontSize: 11, color: fired ? '#64748b' : '#e2e8f0' }}>+{points}/{weight}</span>
+                </div>
+              ))}
+              <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 6 }}>
+                Prioritization aid only — does not certify eligibility.
+              </div>
             </div>
 
             {/* Disclaimer */}

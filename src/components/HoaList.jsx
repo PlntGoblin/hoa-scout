@@ -15,11 +15,23 @@ const CONF_STYLES = {
 
 export default function HoaList({ onClose, onEdit }) {
   const [records, setRecords] = useState(() => listHoas());
+  const [search, setSearch] = useState('');
+  const [filterPolicy, setFilterPolicy] = useState('all');
 
   function handleDelete(name) {
     deleteHoa(name);
     setRecords(listHoas());
   }
+
+  const filtered = records.filter((hoa) => {
+    if (filterPolicy !== 'all' && hoa.strPolicy !== filterPolicy) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      return (hoa.name || '').toLowerCase().includes(q) ||
+             (hoa.strPolicyNotes || '').toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   return (
     <div style={{
@@ -30,28 +42,59 @@ export default function HoaList({ onClose, onEdit }) {
       fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
       {/* Header */}
-      <div style={{ background: '#0f172a', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <div>
-          <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>
-            HOA Knowledge Layer
+      <div style={{ background: '#0f172a', padding: '16px 20px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div>
+            <div style={{ color: '#94a3b8', fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>
+              HOA Knowledge Layer
+            </div>
+            <div style={{ color: '#f8fafc', fontSize: 15, fontWeight: 600 }}>
+              {filtered.length} of {records.length} Record{records.length !== 1 ? 's' : ''}
+            </div>
           </div>
-          <div style={{ color: '#f8fafc', fontSize: 15, fontWeight: 600 }}>
-            {records.length} Record{records.length !== 1 ? 's' : ''}
-          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
         </div>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer' }}>✕</button>
+        {/* Search + filter */}
+        <input
+          type="text"
+          placeholder="Search HOA name or notes…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{
+            width: '100%', boxSizing: 'border-box', marginBottom: 6,
+            padding: '7px 10px', borderRadius: 6, border: '1px solid #334155',
+            background: '#1e293b', color: '#f8fafc', fontSize: 12,
+            fontFamily: 'inherit', outline: 'none',
+          }}
+        />
+        <div style={{ display: 'flex', gap: 4 }}>
+          {['all', 'allowed', 'prohibited', 'unknown'].map((p) => (
+            <button
+              key={p}
+              onClick={() => setFilterPolicy(p)}
+              style={{
+                flex: 1, padding: '4px 0', borderRadius: 5, border: 'none',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                background: filterPolicy === p ? '#3b82f6' : '#1e293b',
+                color: filterPolicy === p ? '#fff' : '#94a3b8',
+              }}
+            >
+              {p === 'all' ? 'All' : p === 'allowed' ? '✓ Allowed' : p === 'prohibited' ? '✗ Prohibited' : '? Unknown'}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Body */}
       <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
-        {records.length === 0 ? (
+        {filtered.length === 0 ? (
           <div style={{ textAlign: 'center', color: '#94a3b8', fontSize: 13, marginTop: 40 }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🏘</div>
             No HOA records yet.<br />
             Click a property pin and use<br />"+ Add HOA Record" to start building the layer.
           </div>
         ) : (
-          records.map((hoa) => {
+          filtered.map((hoa) => {
             const policy = POLICY_STYLES[hoa.strPolicy] || POLICY_STYLES.unknown;
             const conf = CONF_STYLES[hoa.confidence] || CONF_STYLES.low;
             return (
@@ -117,7 +160,7 @@ export default function HoaList({ onClose, onEdit }) {
 
       {/* Footer hint */}
       <div style={{ padding: '12px 20px', borderTop: '1px solid #f1f5f9', fontSize: 11, color: '#94a3b8', flexShrink: 0 }}>
-        Records persist in your browser. Export to CSV coming in Phase 3.
+        Records persist in your browser. Use the Shortlist panel to export properties to CSV.
       </div>
     </div>
   );

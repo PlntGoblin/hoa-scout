@@ -12,6 +12,8 @@ import { findHoa, listHoas, normalizeHoaKey } from './lib/hoaStore';
 import { seedKnownHoas } from './lib/seedHoas';
 import { getAvm } from './lib/rentcast';
 import { lookupNashvillePermit } from './lib/nashvillePermitLookup';
+import { upsertShortlistEntry, isShortlisted, listShortlist } from './lib/shortlistStore';
+import ShortlistPanel from './components/ShortlistPanel';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
@@ -66,6 +68,8 @@ export default function App() {
   const [avm, setAvm] = useState(null);
   const [avmLoading, setAvmLoading] = useState(false);
   const [strPermit, setStrPermit] = useState(null);
+  const [showShortlist, setShowShortlist] = useState(false);
+  const [shortlistCount, setShortlistCount] = useState(() => listShortlist().length);
   const [subdivisionsGeoJSON, setSubdivisionsGeoJSON] = useState(null);
   const [zoningGeoJSON, setZoningGeoJSON] = useState(null);
   const [hoaRecords, setHoaRecords] = useState(() => listHoas());
@@ -100,6 +104,7 @@ export default function App() {
     setStrPermit(null);
     setShowHoaList(false);
     setShowHoaForm(false);
+    setShowShortlist(false);
     const center = MARKETS[m].center;
     mapRef.current?.flyTo({ center: [center.longitude, center.latitude], zoom: center.zoom, duration: 1200 });
   }, []);
@@ -138,6 +143,21 @@ export default function App() {
       setAvmLoading(false);
     }
   }, [avmLoading]);
+
+  const handleShortlist = useCallback(({ score } = {}) => {
+    if (!selectedPin || !parcel) return;
+    upsertShortlistEntry({
+      id: selectedPin.id,
+      address: parcel.siteAddress || selectedPin.display,
+      lng: selectedPin.lng,
+      lat: selectedPin.lat,
+      market,
+      score: score ?? 0,
+      parcel,
+      hoa: hoa || null,
+    });
+    setShortlistCount(listShortlist().length);
+  }, [selectedPin, parcel, hoa, market]);
 
   const addPin = useCallback(({ lat, lng, display }) => {
     const newPin = { id: `${lng},${lat}`, lng, lat, display };
@@ -340,7 +360,7 @@ export default function App() {
 
       {/* HOA Records button */}
       <button
-          onClick={() => { setShowHoaList((v) => !v); setSelectedPin(null); }}
+          onClick={() => { setShowHoaList((v) => !v); setShowShortlist(false); setSelectedPin(null); }}
           style={{
             position: 'absolute', top: 182, left: 16, zIndex: 10,
             background: showHoaList ? '#0f172a' : '#ffffff',
@@ -355,8 +375,30 @@ export default function App() {
           🏘 HOA Records
         </button>
 
+      {/* Shortlist button */}
+      <button
+          onClick={() => { setShowShortlist((v) => !v); setShowHoaList(false); setSelectedPin(null); }}
+          style={{
+            position: 'absolute', top: 232, left: 16, zIndex: 10,
+            background: showShortlist ? '#0f172a' : '#ffffff',
+            color: showShortlist ? '#ffffff' : '#1e293b',
+            border: '1px solid #e2e8f0', borderRadius: 10,
+            padding: '9px 14px', fontSize: 12, fontWeight: 600,
+            cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
+            fontFamily: 'system-ui, -apple-system, sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6,
+          }}
+        >
+          📋 Shortlist {shortlistCount > 0 && (
+            <span style={{
+              background: '#3b82f6', color: '#fff',
+              borderRadius: 10, padding: '1px 6px', fontSize: 11,
+            }}>{shortlistCount}</span>
+          )}
+        </button>
+
       {/* Property card */}
-      {selectedPin && !showHoaForm && !showHoaList && (
+      {selectedPin && !showHoaForm && !showHoaList && !showShortlist && (
         <PropertyCard
           feature={{ properties: { address: selectedPin.display } }}
           parcel={parcel}
@@ -366,7 +408,9 @@ export default function App() {
           avm={avm}
           avmLoading={avmLoading}
           strPermit={strPermit}
+          pinId={selectedPin.id}
           onGetAvm={() => handleGetAvm(parcel?.siteAddress)}
+          onShortlist={handleShortlist}
           onClose={() => { setSelectedPin(null); setParcel(null); setHoa(null); setAvm(null); setStrPermit(null); }}
           onAddHoa={(name) => openHoaForm(name)}
         />
@@ -377,6 +421,17 @@ export default function App() {
         <HoaList
           onClose={() => setShowHoaList(false)}
           onEdit={(record) => openHoaForm(record)}
+        />
+      )}
+
+      {/* Shortlist panel */}
+      {showShortlist && (
+        <ShortlistPanel
+          onClose={() => setShowShortlist(false)}
+          onFlyTo={(entry) => {
+            setShowShortlist(false);
+            mapRef.current?.flyTo({ center: [entry.lng, entry.lat], zoom: 16, duration: 1000 });
+          }}
         />
       )}
 
