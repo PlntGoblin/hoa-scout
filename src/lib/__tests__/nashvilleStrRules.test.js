@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nashvilleStrRule } from '../nashvilleStrRules.js';
+import { nashvilleStrRule } from '../markets/nashville/strRules.js';
 
 describe('nashvilleStrRule — zone classification', () => {
   it('marks MUL as permitted', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sedonaStrRule } from '../strRules.js';
+import { sedonaStrRule } from '../markets/sedona/strRules.js';
 
 describe('sedonaStrRule', () => {
   it('returns unknown when no HOA', () => {

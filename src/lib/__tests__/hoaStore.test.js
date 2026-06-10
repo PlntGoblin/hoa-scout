@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeHoaKey } from '../hoaStore.js';
+import { normalizeHoaKey } from '../store/hoaStore.js';
 
 describe('normalizeHoaKey', () => {
   it('lowercases the name', () => {

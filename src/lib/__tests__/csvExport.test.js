@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateCsv } from '../csvExport.js';
+import { generateCsv } from '../scoring/csvExport.js';
 
 const SAMPLE_ENTRY = {
   id: '-111.76,34.87',

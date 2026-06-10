@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sdStrRule, isSdResidentialZone } from '../sdStrRules.js';
+import { sdStrRule, isSdResidentialZone } from '../markets/sandiego/strRules.js';
 
 describe('sdStrRule — tier assignment', () => {
   it('returns unknown tier and null eligible with no parcel', () => {

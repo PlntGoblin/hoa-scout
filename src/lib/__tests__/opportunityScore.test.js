@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { computeScore, DEFAULT_WEIGHTS, loadWeights, saveWeights, resetWeights } from '../opportunityScore.js';
+import { computeScore, DEFAULT_WEIGHTS, loadWeights, saveWeights, resetWeights } from '../scoring/opportunityScore.js';
 
 // Mock localStorage for node environment
 const store = {};

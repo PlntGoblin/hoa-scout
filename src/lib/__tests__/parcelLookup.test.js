@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectOwnerOccupancy, assessorUrl } from '../parcelLookup.js';
+import { detectOwnerOccupancy, assessorUrl } from '../markets/parcelLookup.js';
 
 describe('detectOwnerOccupancy', () => {
   it('returns unknown for null parcel', () => {
