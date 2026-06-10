@@ -105,6 +105,17 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
               )}
             </div>
 
+            {/* HOA quick badge */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <span style={{ fontSize: 12, color: '#64748b' }}>HOA</span>
+              <Badge color={hoa ? STR_POLICY_COLORS.allowed : STR_POLICY_COLORS.prohibited}>
+                {hoa ? '✓ Yes' : '✗ No'}
+              </Badge>
+              {hoa?.name && (
+                <span style={{ fontSize: 11, color: '#94a3b8' }}>{hoa.name}</span>
+              )}
+            </div>
+
             {/* Owner */}
             <SectionHeader>Owner</SectionHeader>
             <Row label="Name" value={parcel?.ownerName || 'Unavailable'} />
