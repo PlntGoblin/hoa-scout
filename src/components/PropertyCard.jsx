@@ -38,7 +38,18 @@ function Row({ label, value, mono }) {
   );
 }
 
-export default function PropertyCard({ feature, parcel, hoa, market, loading, onClose, onAddHoa }) {
+const AIRBNB_LINKS = {
+  sedona:    'https://insideairbnb.com/sedona/',
+  sandiego:  'https://insideairbnb.com/san-diego/',
+  nashville: 'https://insideairbnb.com/nashville/',
+};
+
+function fmt$(n) {
+  if (n == null) return null;
+  return `$${Number(n).toLocaleString()}`;
+}
+
+export default function PropertyCard({ feature, parcel, hoa, market, loading, avm, avmLoading, strPermit, onGetAvm, onClose, onAddHoa }) {
   if (!feature && !loading) return null;
 
   const isSd        = market === 'sandiego';
@@ -152,8 +163,6 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
             {parcel?.bedrooms && <Row label="Beds / Baths" value={`${parcel.bedrooms} bd / ${parcel.bathrooms ?? '?'} ba`} />}
             {parcel?.squareFootage && <Row label="Sq Ft" value={parcel.squareFootage.toLocaleString()} />}
             {parcel?.yearBuilt && <Row label="Year Built" value={parcel.yearBuilt} />}
-            {parcel?.assessedValue && <Row label="Assessed Value" value={`$${parcel.assessedValue.toLocaleString()}`} />}
-            {parcel?.lastSalePrice && <Row label="Last Sale" value={`$${parcel.lastSalePrice.toLocaleString()}${parcel.lastSaleDate ? ` (${parcel.lastSaleDate.slice(0,7)})` : ''}`} />}
             {parcel?.source === 'rentcast' && (
               <div style={{ fontSize: 10, color: '#94a3b8', padding: '3px 0' }}>Source: RentCast</div>
             )}
@@ -243,6 +252,82 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, on
                 style={{ fontSize: 12, color: '#3b82f6' }}>
                 {isSd ? 'SD STRO Info ↗' : isNashville ? 'Nashville STR Permits ↗' : 'Sedona STR Permits ↗'}
               </a>
+            </div>
+
+            {/* Nashville: active permit badge */}
+            {isNashville && strPermit && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+                <span style={{ color: '#94a3b8', fontSize: 12, minWidth: 130, flexShrink: 0 }}>Active STR Permit</span>
+                <Badge color={strPermit.hasPermit ? STR_POLICY_COLORS.allowed : STR_POLICY_COLORS.prohibited}>
+                  {strPermit.hasPermit ? `✓ Yes (${strPermit.activeCount})` : '✗ None on record'}
+                </Badge>
+              </div>
+            )}
+
+            {/* Financial */}
+            <SectionHeader>Financial</SectionHeader>
+            {parcel?.assessedValue && (
+              <Row label="Assessed Value" value={fmt$(parcel.assessedValue)} />
+            )}
+            {parcel?.lastSalePrice && (
+              <Row label="Last Sale" value={`${fmt$(parcel.lastSalePrice)}${parcel.lastSaleDate ? ` (${parcel.lastSaleDate.slice(0,7)})` : ''}`} />
+            )}
+
+            {/* AVM / Rent estimate */}
+            {avm ? (
+              <>
+                {avm.estimatedValue && (
+                  <Row label="Est. Market Value" value={
+                    avm.valueLow && avm.valueHigh
+                      ? `${fmt$(avm.estimatedValue)} (${fmt$(avm.valueLow)}–${fmt$(avm.valueHigh)})`
+                      : fmt$(avm.estimatedValue)
+                  } />
+                )}
+                {avm.estimatedRent && (
+                  <Row label="Est. Monthly Rent" value={
+                    avm.rentLow && avm.rentHigh
+                      ? `${fmt$(avm.estimatedRent)}/mo (${fmt$(avm.rentLow)}–${fmt$(avm.rentHigh)})`
+                      : `${fmt$(avm.estimatedRent)}/mo`
+                  } />
+                )}
+                <div style={{ fontSize: 10, color: '#94a3b8', padding: '3px 0' }}>
+                  Source: RentCast AVM — estimate only, not an appraisal
+                </div>
+              </>
+            ) : (
+              parcel?.siteAddress && (
+                <div style={{ padding: '6px 0' }}>
+                  <button
+                    onClick={onGetAvm}
+                    disabled={avmLoading}
+                    style={{
+                      padding: '6px 13px', borderRadius: 6,
+                      border: '1px solid #e2e8f0',
+                      background: avmLoading ? '#f1f5f9' : '#f8fafc',
+                      color: '#0f172a', fontSize: 12, fontWeight: 600,
+                      cursor: avmLoading ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {avmLoading ? 'Fetching…' : '💰 Get Rent Estimate'}
+                  </button>
+                  <div style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>
+                    Uses 2 RentCast credits (50/mo limit)
+                  </div>
+                </div>
+              )
+            )}
+
+            {/* STR comps — Inside Airbnb */}
+            <div style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
+              <span style={{ color: '#94a3b8', fontSize: 12 }}>STR Comps </span>
+              <a
+                href={AIRBNB_LINKS[market] || 'https://insideairbnb.com'}
+                target="_blank" rel="noreferrer"
+                style={{ fontSize: 12, color: '#3b82f6' }}
+              >
+                Inside Airbnb ↗
+              </a>
+              <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>Historical comps only</span>
             </div>
 
             {/* Why it surfaced */}

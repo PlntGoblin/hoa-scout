@@ -10,6 +10,8 @@ import UsageTracker from './components/UsageTracker';
 import { lookupParcel } from './lib/parcelLookup';
 import { findHoa, listHoas, normalizeHoaKey } from './lib/hoaStore';
 import { seedKnownHoas } from './lib/seedHoas';
+import { getAvm } from './lib/rentcast';
+import { lookupNashvillePermit } from './lib/nashvillePermitLookup';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
 const MAP_STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
@@ -61,6 +63,9 @@ export default function App() {
   const [hoaFormPrefill, setHoaFormPrefill] = useState(null);
   const [showHoaList, setShowHoaList] = useState(false);
   const [layers, setLayers] = useState(SEDONA_LAYERS);
+  const [avm, setAvm] = useState(null);
+  const [avmLoading, setAvmLoading] = useState(false);
+  const [strPermit, setStrPermit] = useState(null);
   const [subdivisionsGeoJSON, setSubdivisionsGeoJSON] = useState(null);
   const [zoningGeoJSON, setZoningGeoJSON] = useState(null);
   const [hoaRecords, setHoaRecords] = useState(() => listHoas());
@@ -91,6 +96,8 @@ export default function App() {
     setSelectedPin(null);
     setParcel(null);
     setHoa(null);
+    setAvm(null);
+    setStrPermit(null);
     setShowHoaList(false);
     setShowHoaForm(false);
     const center = MARKETS[m].center;
@@ -105,12 +112,32 @@ export default function App() {
     setSelectedPin(pin);
     setParcel(null);
     setHoa(null);
+    setAvm(null);
+    setStrPermit(null);
     setCardLoading(true);
     const result = await lookupParcel(pin.lng, pin.lat, pin.display);
     setParcel(result);
     setHoa(result?.subdivision ? findHoa(result.subdivision) : null);
     setCardLoading(false);
+
+    // Nashville: kick off permit lookup in background (no spinner — it's supplemental)
+    if (result?.county === 'davidson' && result?.siteAddress) {
+      lookupNashvillePermit(result.siteAddress).then(setStrPermit).catch(() => {});
+    }
   }, []);
+
+  const handleGetAvm = useCallback(async (address) => {
+    if (!address || avmLoading) return;
+    setAvmLoading(true);
+    try {
+      const result = await getAvm(address);
+      setAvm(result);
+    } catch (e) {
+      console.warn('AVM fetch failed:', e);
+    } finally {
+      setAvmLoading(false);
+    }
+  }, [avmLoading]);
 
   const addPin = useCallback(({ lat, lng, display }) => {
     const newPin = { id: `${lng},${lat}`, lng, lat, display };
@@ -336,7 +363,11 @@ export default function App() {
           hoa={hoa}
           market={market}
           loading={cardLoading}
-          onClose={() => { setSelectedPin(null); setParcel(null); setHoa(null); }}
+          avm={avm}
+          avmLoading={avmLoading}
+          strPermit={strPermit}
+          onGetAvm={() => handleGetAvm(parcel?.siteAddress)}
+          onClose={() => { setSelectedPin(null); setParcel(null); setHoa(null); setAvm(null); setStrPermit(null); }}
           onAddHoa={(name) => openHoaForm(name)}
         />
       )}
