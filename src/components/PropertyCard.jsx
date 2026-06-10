@@ -46,6 +46,11 @@ const AIRBNB_LINKS = {
   nashville: 'https://insideairbnb.com/nashville/',
 };
 
+function rabbuUrl(address) {
+  if (!address) return 'https://rabbu.com';
+  return `https://rabbu.com/search?address=${encodeURIComponent(address)}`;
+}
+
 function fmt$(n) {
   if (n == null) return null;
   return `$${Number(n).toLocaleString()}`;
@@ -139,7 +144,24 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
       {/* Body */}
       <div style={{ padding: '12px 16px', maxHeight: '75vh', overflowY: 'auto' }}>
         {loading ? (
-          <div style={{ color: '#64748b', fontSize: 13, padding: '16px 0', textAlign: 'center' }}>Looking up parcel data…</div>
+          <div style={{ padding: '8px 0' }}>
+            {/* Section label skeleton */}
+            <div className="skeleton" style={{ height: 10, width: 60, marginBottom: 12 }} />
+            {/* Owner rows */}
+            <div className="skeleton" style={{ height: 13, width: '80%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '65%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '45%', marginBottom: 20 }} />
+            {/* Property section */}
+            <div className="skeleton" style={{ height: 10, width: 60, marginBottom: 12 }} />
+            <div className="skeleton" style={{ height: 13, width: '55%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '70%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '40%', marginBottom: 20 }} />
+            {/* STR section */}
+            <div className="skeleton" style={{ height: 10, width: 80, marginBottom: 12 }} />
+            <div className="skeleton" style={{ height: 32, width: '100%', borderRadius: 6, marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '90%', marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 13, width: '75%' }} />
+          </div>
         ) : (
           <>
             {/* Confidence row */}
@@ -354,17 +376,45 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
               )
             )}
 
-            {/* STR comps — Inside Airbnb */}
-            <div style={{ padding: '6px 0', borderBottom: '1px solid #f1f5f9' }}>
-              <span style={{ color: '#94a3b8', fontSize: 12 }}>STR Comps </span>
-              <a
-                href={AIRBNB_LINKS[market] || 'https://insideairbnb.com'}
-                target="_blank" rel="noreferrer"
-                style={{ fontSize: 12, color: '#3b82f6' }}
-              >
-                Inside Airbnb ↗
-              </a>
-              <span style={{ fontSize: 10, color: '#94a3b8', marginLeft: 6 }}>Historical comps only</span>
+            {/* STR comps */}
+            <div style={{ background: '#f8fafc', borderRadius: 8, padding: '10px 12px', marginTop: 4 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
+                STR Comps
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <a
+                  href={rabbuUrl(parcel?.siteAddress)}
+                  target="_blank" rel="noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '7px 10px', borderRadius: 6,
+                    background: '#fff', border: '1px solid #e2e8f0',
+                    textDecoration: 'none', color: '#1e293b',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>Rabbu ↗</div>
+                    <div style={{ fontSize: 10, color: '#94a3b8' }}>Per-property STR revenue estimate</div>
+                  </div>
+                  <span style={{ fontSize: 10, background: '#d1fae5', color: '#065f46', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Free</span>
+                </a>
+                <a
+                  href={AIRBNB_LINKS[market] || 'https://insideairbnb.com'}
+                  target="_blank" rel="noreferrer"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '7px 10px', borderRadius: 6,
+                    background: '#fff', border: '1px solid #e2e8f0',
+                    textDecoration: 'none', color: '#1e293b',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 600 }}>Inside Airbnb ↗</div>
+                    <div style={{ fontSize: 10, color: '#94a3b8' }}>Market-level occupancy &amp; ADR data</div>
+                  </div>
+                  <span style={{ fontSize: 10, background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4, fontWeight: 600 }}>Historical</span>
+                </a>
+              </div>
             </div>
 
             {/* Why it surfaced — score breakdown */}

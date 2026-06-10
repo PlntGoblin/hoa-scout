@@ -72,6 +72,8 @@ export default function App() {
   const [shortlistCount, setShortlistCount] = useState(() => listShortlist().length);
   const [subdivisionsGeoJSON, setSubdivisionsGeoJSON] = useState(null);
   const [zoningGeoJSON, setZoningGeoJSON] = useState(null);
+  const [layersLoading, setLayersLoading] = useState(false);
+  const [layerLoadKey, setLayerLoadKey] = useState(0); // increments to re-trigger bar animation
   const [hoaRecords, setHoaRecords] = useState(() => listHoas());
   const mapRef = useRef(null);
 
@@ -83,13 +85,17 @@ export default function App() {
     const m = MARKETS[market];
     setSubdivisionsGeoJSON(null);
     setZoningGeoJSON(null);
+    setLayersLoading(true);
+    setLayerLoadKey((k) => k + 1);
 
-    if (m.subdivisionsUrl) {
-      fetch(m.subdivisionsUrl).then((r) => r.json()).then(setSubdivisionsGeoJSON).catch(() => setSubdivisionsGeoJSON(empty));
-    }
-    if (m.zoningUrl) {
-      fetch(m.zoningUrl).then((r) => r.json()).then(setZoningGeoJSON).catch(() => setZoningGeoJSON(empty));
-    }
+    const fetches = [];
+    if (m.subdivisionsUrl) fetches.push(
+      fetch(m.subdivisionsUrl).then((r) => r.json()).then(setSubdivisionsGeoJSON).catch(() => setSubdivisionsGeoJSON(empty))
+    );
+    if (m.zoningUrl) fetches.push(
+      fetch(m.zoningUrl).then((r) => r.json()).then(setZoningGeoJSON).catch(() => setZoningGeoJSON(empty))
+    );
+    Promise.allSettled(fetches).finally(() => setLayersLoading(false));
   }, [market]);
 
   const switchMarket = useCallback((m) => {
@@ -242,6 +248,9 @@ export default function App() {
 
   return (
     <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+      {/* Layer loading bar — re-mounts on each market switch to restart animation */}
+      {layersLoading && <div key={layerLoadKey} className="layer-loading-bar" />}
+
       <Map
         ref={mapRef}
         initialViewState={currentMarket.center}
