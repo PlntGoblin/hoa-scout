@@ -56,7 +56,7 @@ function fmt$(n) {
   return `$${Number(n).toLocaleString()}`;
 }
 
-export default function PropertyCard({ feature, parcel, hoa, market, loading, avm, avmLoading, strPermit, onGetAvm, onClose, onAddHoa, onShortlist, pinId }) {
+export default function PropertyCard({ feature, parcel, hoa, market, loading, avm, avmLoading, strPermit, onGetAvm, onClose, onAddHoa, onShortlist, onToggleStar, pinId, pinStarred }) {
   if (!feature && !loading) return null;
 
   const isSd        = market === 'sandiego';
@@ -124,20 +124,33 @@ export default function PropertyCard({ feature, parcel, hoa, market, loading, av
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#64748b', fontSize: 18, cursor: 'pointer', padding: 0 }}>✕</button>
           </div>
         </div>
-        {/* Shortlist button */}
+        {/* Star + Shortlist buttons */}
         {!loading && parcel && (
-          <button
-            onClick={() => onShortlist?.({ score })}
-            style={{
-              marginTop: 10, width: '100%', padding: '7px 0', borderRadius: 6,
-              border: shortlisted ? '1px solid #3b82f6' : '1px solid #334155',
-              background: shortlisted ? '#1d4ed8' : '#1e293b',
-              color: shortlisted ? '#fff' : '#94a3b8',
-              fontSize: 12, fontWeight: 600, cursor: 'pointer',
-            }}
-          >
-            {shortlisted ? '✓ On Shortlist' : '+ Add to Shortlist'}
-          </button>
+          <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+            <button
+              onClick={() => onToggleStar?.()}
+              title={pinStarred ? 'Remove star' : 'Star this property'}
+              style={{
+                padding: '7px 12px', borderRadius: 6, border: 'none',
+                background: pinStarred ? '#854d0e' : '#1e293b',
+                fontSize: 15, cursor: 'pointer', flexShrink: 0,
+              }}
+            >
+              {pinStarred ? '⭐' : '☆'}
+            </button>
+            <button
+              onClick={() => onShortlist?.({ score })}
+              style={{
+                flex: 1, padding: '7px 0', borderRadius: 6,
+                border: shortlisted ? '1px solid #3b82f6' : '1px solid #334155',
+                background: shortlisted ? '#1d4ed8' : '#1e293b',
+                color: shortlisted ? '#fff' : '#94a3b8',
+                fontSize: 12, fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              {shortlisted ? '✓ On Shortlist' : '+ Add to Shortlist'}
+            </button>
+          </div>
         )}
       </div>
 

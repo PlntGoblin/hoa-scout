@@ -13,6 +13,7 @@ import { seedKnownHoas } from './lib/seedHoas';
 import { getAvm } from './lib/rentcast';
 import { lookupNashvillePermit } from './lib/nashvillePermitLookup';
 import { upsertShortlistEntry, isShortlisted, listShortlist } from './lib/shortlistStore';
+import { loadPins, savePin, toggleStar, removePin, pushRecent } from './lib/pinStore';
 import ShortlistPanel from './components/ShortlistPanel';
 
 const MAPTILER_KEY = import.meta.env.VITE_MAPTILER_KEY;
@@ -56,7 +57,7 @@ const NASHVILLE_LAYERS = [
 
 export default function App() {
   const [market, setMarket] = useState('sedona');
-  const [pins, setPins] = useState([]);
+  const [pins, setPins] = useState(() => loadPins('sedona'));
   const [selectedPin, setSelectedPin] = useState(null);
   const [parcel, setParcel] = useState(null);
   const [hoa, setHoa] = useState(null);
@@ -102,7 +103,7 @@ export default function App() {
     setMarket(m);
     const layerMap = { sedona: SEDONA_LAYERS, sandiego: SD_LAYERS, nashville: NASHVILLE_LAYERS };
     setLayers(layerMap[m] || SEDONA_LAYERS);
-    setPins([]);
+    setPins(loadPins(m));
     setSelectedPin(null);
     setParcel(null);
     setHoa(null);
@@ -166,17 +167,28 @@ export default function App() {
   }, [selectedPin, parcel, hoa, market]);
 
   const addPin = useCallback(({ lat, lng, display }) => {
-    const newPin = { id: `${lng},${lat}`, lng, lat, display };
-    setPins((prev) => prev.find((p) => p.id === newPin.id) ? prev : [...prev, newPin]);
+    const newPin = { id: `${lng},${lat}`, lng, lat, display, starred: false };
+    const updated = savePin(market, newPin);
+    setPins(updated);
+    pushRecent({ display, lng, lat, market });
     mapRef.current?.flyTo({ center: [lng, lat], zoom: 15, duration: 1000 });
     setShowHoaList(false);
+    setShowShortlist(false);
     openCard(newPin);
-  }, [openCard]);
+  }, [openCard, market]);
+
+  const handleToggleStar = useCallback((pinId) => {
+    const updated = toggleStar(market, pinId);
+    if (!updated) return;
+    setPins(loadPins(market));
+    // If this pin is the selected one, refresh its display
+    setSelectedPin((prev) => prev?.id === pinId ? { ...prev, starred: updated.starred } : prev);
+  }, [market]);
 
   const handleMapClick = useCallback((e) => {
     const { lng, lat } = e.lngLat;
-    addPin({ lat, lng, display: `${lat.toFixed(5)}, ${lng.toFixed(5)}` });
-  }, [addPin]);
+    addPin({ lat, lng, display: `${lat.toFixed(5)}, ${lng.toFixed(5)}`, market });
+  }, [addPin, market]);
 
   const openHoaForm = useCallback((prefill) => {
     setHoaFormPrefill(prefill);
@@ -331,13 +343,28 @@ export default function App() {
           <Marker key={pin.id} longitude={pin.lng} latitude={pin.lat} anchor="bottom"
             onClick={(e) => { e.originalEvent.stopPropagation(); openCard(pin); }}
           >
-            <div style={{
-              width: 20, height: 20, borderRadius: '50% 50% 50% 0',
-              transform: 'rotate(-45deg)',
-              background: selectedPin?.id === pin.id ? '#0f172a' : '#3b82f6',
-              border: '2px solid white', boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-              cursor: 'pointer', transition: 'background 0.2s',
-            }} />
+            {pin.starred ? (
+              // Starred pin — gold star marker
+              <div style={{
+                fontSize: 22, lineHeight: 1, cursor: 'pointer',
+                filter: selectedPin?.id === pin.id
+                  ? 'drop-shadow(0 0 4px rgba(251,191,36,0.9))'
+                  : 'drop-shadow(0 2px 3px rgba(0,0,0,0.4))',
+                transform: selectedPin?.id === pin.id ? 'scale(1.25)' : 'scale(1)',
+                transition: 'transform 0.15s',
+              }}>
+                ⭐
+              </div>
+            ) : (
+              // Regular teardrop pin
+              <div style={{
+                width: 20, height: 20, borderRadius: '50% 50% 50% 0',
+                transform: 'rotate(-45deg)',
+                background: selectedPin?.id === pin.id ? '#0f172a' : '#3b82f6',
+                border: '2px solid white', boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                cursor: 'pointer', transition: 'background 0.2s',
+              }} />
+            )}
           </Marker>
         ))}
       </Map>
@@ -418,8 +445,10 @@ export default function App() {
           avmLoading={avmLoading}
           strPermit={strPermit}
           pinId={selectedPin.id}
+          pinStarred={selectedPin.starred}
           onGetAvm={() => handleGetAvm(parcel?.siteAddress)}
           onShortlist={handleShortlist}
+          onToggleStar={() => handleToggleStar(selectedPin?.id)}
           onClose={() => { setSelectedPin(null); setParcel(null); setHoa(null); setAvm(null); setStrPermit(null); }}
           onAddHoa={(name) => openHoaForm(name)}
         />
