@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getUsageStats } from '../lib/rentcast';
+import { getUsageStats } from '../lib/api/rentcast';
 
 const LIMIT = 50;
 

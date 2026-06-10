@@ -1,10 +1,10 @@
-import { detectOwnerOccupancy, assessorUrl } from '../lib/parcelLookup';
-import { deriveConfidence } from '../lib/hoaStore';
-import { sedonaStrRule } from '../lib/strRules';
-import { sdStrRule } from '../lib/sdStrRules';
-import { nashvilleStrRule } from '../lib/nashvilleStrRules';
-import { computeScore } from '../lib/opportunityScore';
-import { isShortlisted } from '../lib/shortlistStore';
+import { detectOwnerOccupancy, assessorUrl } from '../lib/markets/parcelLookup';
+import { deriveConfidence } from '../lib/store/hoaStore';
+import { sedonaStrRule } from '../lib/markets/sedona/strRules';
+import { sdStrRule } from '../lib/markets/sandiego/strRules';
+import { nashvilleStrRule } from '../lib/markets/nashville/strRules';
+import { computeScore } from '../lib/scoring/opportunityScore';
+import { isShortlisted } from '../lib/store/shortlistStore';
 
 const CONFIDENCE_COLORS = {
   high:   { bg: '#d1fae5', text: '#065f46', label: 'High' },

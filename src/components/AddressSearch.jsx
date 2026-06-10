@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { geocodeAddress } from '../lib/geocoder';
-import { getRecents, removeRecent } from '../lib/pinStore';
+import { geocodeAddress } from '../lib/api/geocoder';
+import { getRecents, removeRecent } from '../lib/store/pinStore';
 
 const PLACEHOLDERS = {
   sedona:    'Enter a Sedona address…',

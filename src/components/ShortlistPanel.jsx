@@ -2,8 +2,8 @@ import { useState } from 'react';
 import {
   listShortlist, updateShortlistEntry, removeShortlistEntry,
   STATUS_OPTIONS, statusStyle,
-} from '../lib/shortlistStore';
-import { downloadCsv } from '../lib/csvExport';
+} from '../lib/store/shortlistStore';
+import { downloadCsv } from '../lib/scoring/csvExport';
 
 const MARKETS = { sedona: 'Sedona', sandiego: 'San Diego', nashville: 'Nashville' };
 

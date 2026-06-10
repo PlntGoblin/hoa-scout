@@ -1,7 +1,7 @@
 import { routeCounty } from './countyRouter';
-import { lookupPropertyRentCast } from './rentcast';
-import { lookupSdParcel } from './sdParcelLookup';
-import { lookupNashvilleParcel } from './nashvilleParcelLookup';
+import { lookupPropertyRentCast } from '../api/rentcast';
+import { lookupSdParcel } from './sandiego/parcelLookup';
+import { lookupNashvilleParcel } from './nashville/parcelLookup';
 
 /**
  * Look up parcel + owner info.

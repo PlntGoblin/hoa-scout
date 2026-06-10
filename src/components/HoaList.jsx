@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { listHoas, deleteHoa } from '../lib/hoaStore';
+import { listHoas, deleteHoa } from '../lib/store/hoaStore';
 
 const POLICY_STYLES = {
   allowed:    { bg: '#d1fae5', text: '#065f46', label: '✓ Allowed' },

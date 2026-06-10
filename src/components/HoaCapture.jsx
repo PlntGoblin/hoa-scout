@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { upsertHoa } from '../lib/hoaStore';
+import { upsertHoa } from '../lib/store/hoaStore';
 
 const POLICY_OPTIONS = [
   { value: 'allowed', label: '✓ Allowed', color: '#065f46' },
